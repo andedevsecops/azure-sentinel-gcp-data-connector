@@ -61,21 +61,21 @@ When running the scripts the first time in a new project, if asked, accept the q
 #set OS environment variables for script. Change these for your deployment
 
 MY_PROJECT=<strong>MY_PROJECT</strong> (Project ID)
-PUBSUB_FUNCTION=ExamplePubSubFunction
+PUBSUB_FUNCTION=GCPToAzSentinelPubSubFunction
 
-PUBSUB_TOPIC=ExamplePubSubLogsTopic
-PUBSUB_SINK1=ExampleSinkForFunctions
-PUBSUB_SINK2=ExampleSinkNoFunctions
+PUBSUB_TOPIC=GCPToAzSentinelPubSubLogsTopic
+PUBSUB_SINK1=GCPToAzSentinelSinkForFunctions
+PUBSUB_SINK2=GCPToAzSentinelSinkNoFunctions
 
 WORKSPACE_ID=<strong>Log Analytics WORKSPACE_ID</strong>
 WORKSPACE_KEY=<strong>Log Analytics WORKSPACE_KEY</strong>
 TABLE_NAME=<strong>Custom Log Table</strong>
 
-RETRY_FUNCTON=ExamplePubSubRetry
-RETRY_TOPIC=ExamplePubSubRetryTopic
-RETRY_SUBSCRIPTION=ExamplePubSubRetryTopic-sub
-RETRY_TRIGGER_PUBSUB=ExampleRetryTrigger
-RETRY_SCHEDULE=ExampleRetrySchedule
+RETRY_FUNCTON=GCPToAzSentinelPubSubRetry
+RETRY_TOPIC=GCPToAzSentinelPubSubRetryTopic
+RETRY_SUBSCRIPTION=GCPToAzSentinelPubSubRetryTopic-sub
+RETRY_TRIGGER_PUBSUB=GCPToAzSentinelRetryTrigger
+RETRY_SCHEDULE=GCPToAzSentinelRetrySchedule
 
 
 
@@ -122,12 +122,11 @@ gcloud functions deploy $PUBSUB_FUNCTION --runtime python37 \
   --set-env-vars=WORKSPACE_ID=$WORKSPACE_ID,WORKSPACE_KEY=$WORKSPACE_KEY,TABLE_NAME=$TABLE_NAME,PROJECTID=$MY_PROJECT,RETRY_TOPIC=$RETRY_TOPIC
 
 
-#This is a common section for all examples
-#Doesn't need to be repeated for all unless you wish to have separate PubSub Topics for retrying different events.
-
+#create Retry Topic
 gcloud pubsub topics create $RETRY_TOPIC
 
 gcloud pubsub subscriptions create --topic $RETRY_TOPIC $RETRY_SUBSCRIPTION --ack-deadline=240
+
 cd PubSubRetryFunction
 
 #create Retry function
