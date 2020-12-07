@@ -172,13 +172,19 @@ gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --t
 <tr><td>SOURCE_NAME</td><td>If set, this will be assigned to the “Source” of the event. If not set, defaults to PubSub topic</td></tr>
 <tr><td>INDEX</td><td>If this is set to LOGNAME then another environment variable with the name of the log needs to be set with an index name e.g. if you want all logs from “cloudaudit.googleapis.com%2Factivity” to be sent to index ActivityIX, you need to create an environment variable with the name “activity” with the value of ActivityIX. 
 Note to use the value after “%2F”, or if the log doesn’t have that, use the value after /logs/ (eg. A logname of projects/projname/logs/OSConfigAgent would have variable set to OSConfigAgent)
-Notes:HEC Token must have set access to the indexes noted here
-Wildcard values are not accepted</td></tr>
+
+</td></tr>
 <tr><td>logname</td><td>A variable with a log name for the event. Note that INDEX needs to be set to LOGNAME for this to be used. Use logname after /logs/ or if name has “%2F” in the name, use the logname after “%2F” 
 Examples:
 cloudaudit.googleapis.com%2Factivity -> use activity 
 /logs/OSConfigAgent -> use OSConfigAgent
-(defaults to no value)</td></tr>
+(defaults to no value)
+In Log name, select the audit log type that you want to see:
+
+For Admin Activity audit logs, select activity.
+For Data Access audit logs, select data_access.
+For System Event audit logs, select system_event.
+For Policy Denied audit logs, select policy.</td></tr>
 <tr><td>COMPATIBLE</td><td>Set this to TRUE to maintain compatibility with Add-On. If not TRUE, event payload will be exact copy of PubSub event. Default is TRUE</td></tr>
 <tr><td>RETRY_TOPIC</td><td>Name of Topic to send event to on any failure scenario for the function</td></tr>
 </table>
