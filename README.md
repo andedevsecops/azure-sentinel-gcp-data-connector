@@ -9,6 +9,8 @@ Stackdriver Logging -> Logging Export -> PubSub Topic -> GCP Function -> Azure L
 Stackdriver Logging -> Logging Export -> PubSub Topic -> GCP Function -> PubSub Topic (error:RetryTopic)
 Cloud Schedule -> PubSub Topic (Trigger) -> GCP Function(->Pull from PubSub Retry Topic)-> Azure Log Analytics
 
+For more information visit https://cloud.google.com/logging/docs/routing/overview
+
 ## **Pre-requisites**
 
 This function requires Cloud Functions API to be enabled.
@@ -67,12 +69,12 @@ MY_PROJECT=<strong>MY_PROJECT</strong> (Project ID)
 PUBSUB_FUNCTION=Ingest-GCP-Logs-To-Azure-Sentinel
 
 PUBSUB_TOPIC=GCPLogsTopic
-PUBSUB_SINK1=SinkForFunctions
-PUBSUB_SINK2=SinkNoFunctions
+PUBSUB_SINK1=LogsExporterSinkForFunctions
+PUBSUB_SINK2=LogsExporterSinkNoFunctions
 
 WORKSPACE_ID=<strong>Log Analytics WORKSPACE_ID</strong>
 WORKSPACE_KEY=<strong>Log Analytics WORKSPACE_KEY</strong>
-TABLE_NAME=<strong>Custom Log Table</strong>
+LAW_TABLE_NAME=<strong>Custom Log Table</strong>
 
 RETRY_FUNCTON=Retry-Ingest-GCP-Logs-To-Azure-Sentinel
 RETRY_TOPIC=GCPLogsRetryTopic
@@ -115,28 +117,29 @@ gcloud pubsub topics add-iam-policy-binding $PUBSUB_TOPIC \
 #the clone command only needs to be done once for all of the examples
 git clone https://github.com/andedevsecops/azure-sentinel-gcp-data-connector.git
 
-cd Ingest-GCP-Logs-To-Azure-Sentinel
+cd azure-sentinel-gcp-data-connector/Ingest-GCP-Logs-To-Azure-Sentinel
 
 #create function
 
 gcloud functions deploy $PUBSUB_FUNCTION --runtime python37 \
   --trigger-topic=$PUBSUB_TOPIC --entry-point=hello_pubsub \
   --allow-unauthenticated \
-  --set-env-vars=WORKSPACE_ID=$WORKSPACE_ID,WORKSPACE_KEY=$WORKSPACE_KEY,TABLE_NAME=$TABLE_NAME,PROJECTID=$MY_PROJECT,RETRY_TOPIC=$RETRY_TOPIC
+  --set-env-vars=WORKSPACE_ID=$WORKSPACE_ID,WORKSPACE_KEY=$WORKSPACE_KEY,LAW_TABLE_NAME=$LAW_TABLE_NAME,PROJECTID=$MY_PROJECT,RETRY_TOPIC=$RETRY_TOPIC
 
+Note **Exit to root directory using cd ..**
 
 #create Retry Topic
 gcloud pubsub topics create $RETRY_TOPIC
 
 gcloud pubsub subscriptions create --topic $RETRY_TOPIC $RETRY_SUBSCRIPTION --ack-deadline=240
 
-cd Retry-Ingest-GCP-Logs-To-Azure-Sentinel
+cd azure-sentinel-gcp-data-connector/Retry-Ingest-GCP-Logs-To-Azure-Sentinel
 
 #create Retry function
 
 gcloud functions deploy $RETRY_FUNCTON --runtime python37 \
  --trigger-topic=$RETRY_TRIGGER_PUBSUB --entry-point=hello_pubsub --allow-unauthenticated --timeout=240\
- --set-env-vars=WORKSPACE_ID=$WORKSPACE_ID,WORKSPACE_KEY=$WORKSPACE_KEY,TABLE_NAME=$TABLE_NAME,PROJECTID=$MY_PROJECT,SUBSCRIPTION=$RETRY_SUBSCRIPTION,RETRY_TRIGGER_TOPIC=$RETRY_TRIGGER_PUBSUB
+ --set-env-vars=WORKSPACE_ID=$WORKSPACE_ID,WORKSPACE_KEY=$WORKSPACE_KEY,LAW_TABLE_NAME=$LAW_TABLE_NAME,PROJECTID=$MY_PROJECT,SUBSCRIPTION=$RETRY_SUBSCRIPTION,RETRY_TRIGGER_TOPIC=$RETRY_TRIGGER_PUBSUB
 
 gcloud pubsub topics create $RETRY_TRIGGER_PUBSUB
 

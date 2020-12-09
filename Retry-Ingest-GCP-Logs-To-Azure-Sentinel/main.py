@@ -15,6 +15,8 @@ from threading import Thread
 from queue import Queue
 from datetime import datetime
 from datetime import date
+from google.cloud import secretmanager
+
 ##turns off the warning that is generated below because using self signed ssl cert
 urllib3.disable_warnings()
 
@@ -93,22 +95,6 @@ def synchronous_pull(project_id, subscription_name):
     print('in:'+str(incount)+' success:'+str(outcount))
     return outcount    
 
-def get_secret_value(secret_name):
-    print("Retrieving Secret values from Secrets Manager")
-    # Setup the Secret manager Client
-    client = secretmanager.SecretManagerServiceClient()
-    # Get the sites environment credentials
-    project_id = os.environ["PROJECTID"]
-
-    # Get the secret value  
-    resource_name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-    try:
-        response = client.access_secret_version(resource_name)
-    except:
-        print(f"Unknown Error in retreiving secret value: {secret_name}")
-    secret_value = response.payload.data.decode('UTF-8')
-    return secret_value
-
 def prepare_post(logdata):
     print("Preparing LogData to send to Log Analytics Workspace")
     try:
@@ -153,7 +139,7 @@ def post_data(workspace_id, workspace_key, logdata, custom_log_table):
     content_type = 'application/json'
     resource = '/api/logs'
     rfc1123date = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-    content_length = len(body)
+    content_length = len(logdata)
     signature = build_signature(workspace_id, workspace_key, rfc1123date, content_length, method, content_type, resource)
 
     uri = 'https://' + workspace_id + '.ods.opinsights.azure.com' + resource + '?api-version=2016-04-01'
@@ -182,6 +168,23 @@ def post_data(workspace_id, workspace_key, logdata, custom_log_table):
         print ("Error: ",err)
         return False
     return True    
+
+def get_secret_value(secret_name):
+    print("Retrieving Secret values from Secrets Manager")
+    # Setup the Secret manager Client
+    client = secretmanager.SecretManagerServiceClient()
+    # Get the sites environment credentials
+    project_id = os.environ["PROJECTID"]
+
+    # Get the secret value  
+    print(f"Retrieving Secret values for {secret_name} from Secrets Manager")
+    resource_name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    try:
+        response = client.access_secret_version(resource_name)
+    except:
+        print(f"Unknown Error in retreiving secret value: {secret_name}")
+    secret_value = response.payload.data.decode('UTF-8')
+    return secret_value
 
 def retrypushHandler():
     """Publishes a message to Pub/Sub topic to fire another Retry"""

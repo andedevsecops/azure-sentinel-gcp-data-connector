@@ -11,6 +11,7 @@ import logging
 
 from datetime import datetime
 from datetime import date
+from google.cloud import secretmanager
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -117,40 +118,24 @@ def hello_pubsub(event, context):
     event_message=event_message+'"event":'+payload+'}'
     prepare_post(event_message, source)
     
-def get_secret_value(secret_name):
-    print("Retrieving Secret values from Secrets Manager")
-    # Setup the Secret manager Client
-    client = secretmanager.SecretManagerServiceClient()
-    # Get the sites environment credentials
-    project_id = os.environ["PROJECTID"]
-
-    # Get the secret value  
-    resource_name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
-    try:
-        response = client.access_secret_version(resource_name)
-    except:
-        print(f"Unknown Error in retreiving secret value: {secret_name}")
-    secret_value = response.payload.data.decode('UTF-8')
-    return secret_value
-
 def prepare_post(logdata, source):
     print("Preparing LogData to send to Log Analytics Workspace")
     try:
-        workspace_id = get_secret_value(os.environ['WORKSPACE_ID'])
+        workspace_id = os.environ['WORKSPACE_ID']
     except:        
         print("Unknown Error in retreiving environment variable WORKSPACE_ID")
 
     try:
-        workspace_key = get_secret_value(os.environ['WORKSPACE_KEY'])
+        workspace_key = os.environ['WORKSPACE_KEY']
     except:
         print("Unknown Error in retreiving environment variable WORKSPACE_KEY")
 
     try:
         custom_log_table = os.environ['LAW_TABLE_NAME']
     except:
-        print("Unknown Error in retreiving environment variable TABLE_NAME")
+        print("Unknown Error in retreiving environment variable LAW_TABLE_NAME")
 
-    post_data(workspace_id, workspace_key, logdata, custom_log_table, source)
+    post_data(get_secret_value(workspace_id), get_secret_value(workspace_key), logdata, custom_log_table, source)
 
 def build_signature(workspace_id, workspace_key, date, content_length, method, content_type, resource):
     """Returns authorization header which will be used when sending data into Azure Log Analytics"""
@@ -177,7 +162,7 @@ def post_data(workspace_id, workspace_key, logdata, custom_log_table, source):
     content_type = 'application/json'
     resource = '/api/logs'
     rfc1123date = datetime.utcnow().strftime('%a, %d %b %Y %H:%M:%S GMT')
-    content_length = len(body)
+    content_length = len(logdata)
     signature = build_signature(workspace_id, workspace_key, rfc1123date, content_length, method, content_type, resource)
 
     uri = 'https://' + workspace_id + '.ods.opinsights.azure.com' + resource + '?api-version=2016-04-01'
@@ -210,6 +195,24 @@ def post_data(workspace_id, workspace_key, logdata, custom_log_table, source):
       print(body.replace('\n',''))
       errorHandler(body,source)
     
+def get_secret_value(secret_name):
+    
+    # Setup the Secret manager Client
+    client = secretmanager.SecretManagerServiceClient()
+    # Get the sites environment credentials
+    project_id = os.environ["PROJECTID"]
+
+    # Get the secret value  
+    print(f"Retrieving Secret values for {secret_name} from Secrets Manager")
+    resource_name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    try:
+        response = client.access_secret_version(resource_name)
+    except:
+        print(f"Unknown Error in retreiving secret value: {secret_name}")
+    secret_value = response.payload.data.decode('UTF-8')
+    return secret_value
+
+
 def errorHandler(logdata,source):
     """Publishes failed messages to Pub/Sub topic to Retry later."""
 
