@@ -21,13 +21,13 @@ Set up a PubSub Topic for error messages (Note the name of the topic -  this wil
 **This function requires Secrets Manager to store Azure Log Analytics WORKSPACE ID and WORKSPACE KEY and provide Secret Name in the Environment Variables section.**
 
 For example
-![SecretsManager](.\images\SecretsManager.png)
+![SecretsManager](./images/SecretsManager.png)
 
 Grant Permissions to App service account inorder to retrieve secret values programmatically in cloud function
 
 1. Go to IAM
 2. Select you app service account and click on "Add" on top - refer the following diagram
-	![SecretsManagerPermissions](.\images\SecretsManagerPermissions.png)
+	![SecretsManagerPermissions](./images/SecretsManagerPermissions.png)
 
 ## **Function Dependencies:**
 PubSub Function requires the Retry Function. Install and set up the Retry Function first
@@ -81,8 +81,8 @@ PUBSUB_TOPIC=GCPLogsTopic
 PUBSUB_SINK1=LogsExporterSinkForFunctions
 PUBSUB_SINK2=LogsExporterSinkNoFunctions
 
-WORKSPACE_ID=<strong>Log Analytics WORKSPACE_ID</strong>
-WORKSPACE_KEY=<strong>Log Analytics WORKSPACE_KEY</strong>
+WORKSPACE_ID=<strong>Secret Name for Azure Log Analytics Workspace ID from GCP Secrets Manager</strong>
+WORKSPACE_KEY=<strong>Secret Name for Azure Log Analytics Workspace Key from GCP Secrets Manager</strong>
 LAW_TABLE_NAME=<strong>Custom Log Table</strong>
 
 RETRY_FUNCTON=Retry-Ingest-GCP-Logs-To-Azure-Sentinel
