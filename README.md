@@ -27,25 +27,25 @@ This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the
 #### Log export Sinks Created:
 
 <table><tr><td><strong>Sink</strong></td><td><strong>Description</strong></td><td><strong>Filter</strong></td></tr>
-<tr><td>ExampleSinkFunctions</td><td>Selects all GCP Function logs. Important note that it filters out the PubSub Function!!</td><td>resource.labels.function_name!="ExamplePubSub"</td></tr>
-<tr><td>ExampleSinkNoFunctions</td><td>Selects all Kubernetes/containers logs</td><td>protoPayload.serviceName="container.googleapis.com"</td></tr></table>
+<tr><td>SinkForFunctions</td><td>Selects all GCP Function logs. Important note that it filters out the PubSub Function!!</td><td>resource.labels.function_name!="Ingest-GCP-Logs-To-Azure-Sentinel"</td></tr>
+<tr><td>SinkNoFunctions</td><td>Selects all Kubernetes/containers logs</td><td>protoPayload.serviceName="container.googleapis.com"</td></tr></table>
 
 **Caution: With aggregated export sinks, you can export a very large number of log entries. Design your logs query carefully.**
 
 
 #### PubSub Topics Created:
 
-**ExamplePubSubLogsTopic** : This topic will collect logs from the export sinks
+**GCPLogsTopic** : This topic will collect logs from the export sinks
 
-**ExamplePubSubRetryTopic** : This topic can be common between all functions. This topic will collect failed writes from ExamplePubSub to HEC
+**GCPLogsRetryTopic** : This topic can be common between all functions. This topic will collect failed writes from Ingest-GCP-Logs-To-Azure-Sentinel to 
 
-**ExampleRetryTrigger** : This topic can be common between all functions and triggers retries based on Cloud Schedule
+**GCPToAzSentinelRetryTrigger** : This topic can be common between all functions and triggers retries based on Cloud Schedule
 
 #### GCP Functions Created:
 
-**ExamplePubSub** : PubSub Function pulling from ExamplePubSubLogsTopic 
+**Ingest-GCP-Logs-To-Azure-Sentinel** : PubSub Function pulling from ExamplePubSubLogsTopic 
 
-**ExampleRetry** : Retry Function to pull any failed messages from ExamplePubSub (can be re-used across all examples)
+**Retry-Ingest-GCP-Logs-To-Azure-Sentinel** : Retry Function to pull any failed messages from Ingest-GCP-Logs-To-Azure-Sentinel (can be re-used across all examples)
 
 
 ## Run in bash or the GCP Cloud Shell
@@ -61,19 +61,19 @@ When running the scripts the first time in a new project, if asked, accept the q
 #set OS environment variables for script. Change these for your deployment
 
 MY_PROJECT=<strong>MY_PROJECT</strong> (Project ID)
-PUBSUB_FUNCTION=GCPToAzSentinelPubSubFunction
+PUBSUB_FUNCTION=Ingest-GCP-Logs-To-Azure-Sentinel
 
-PUBSUB_TOPIC=GCPToAzSentinelPubSubLogsTopic
-PUBSUB_SINK1=GCPToAzSentinelSinkForFunctions
-PUBSUB_SINK2=GCPToAzSentinelSinkNoFunctions
+PUBSUB_TOPIC=GCPLogsTopic
+PUBSUB_SINK1=SinkForFunctions
+PUBSUB_SINK2=SinkNoFunctions
 
 WORKSPACE_ID=<strong>Log Analytics WORKSPACE_ID</strong>
 WORKSPACE_KEY=<strong>Log Analytics WORKSPACE_KEY</strong>
 TABLE_NAME=<strong>Custom Log Table</strong>
 
-RETRY_FUNCTON=GCPToAzSentinelPubSubRetry
-RETRY_TOPIC=GCPToAzSentinelPubSubRetryTopic
-RETRY_SUBSCRIPTION=GCPToAzSentinelPubSubRetryTopic-sub
+RETRY_FUNCTON=Retry-Ingest-GCP-Logs-To-Azure-Sentinel
+RETRY_TOPIC=GCPLogsRetryTopic
+RETRY_SUBSCRIPTION=GCPLogsRetryTopic-sub
 RETRY_TRIGGER_PUBSUB=GCPToAzSentinelRetryTrigger
 RETRY_SCHEDULE=GCPToAzSentinelRetrySchedule
 
@@ -112,7 +112,7 @@ gcloud pubsub topics add-iam-policy-binding $PUBSUB_TOPIC \
 #the clone command only needs to be done once for all of the examples
 git clone https://github.com/andedevsecops/azure-sentinel-gcp-data-connector.git
 
-cd PubSubFunction
+cd Ingest-GCP-Logs-To-Azure-Sentinel
 
 #create function
 
@@ -127,7 +127,7 @@ gcloud pubsub topics create $RETRY_TOPIC
 
 gcloud pubsub subscriptions create --topic $RETRY_TOPIC $RETRY_SUBSCRIPTION --ack-deadline=240
 
-cd PubSubRetryFunction
+cd Retry-Ingest-GCP-Logs-To-Azure-Sentinel
 
 #create Retry function
 
@@ -163,13 +163,14 @@ gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --t
 ## **Function Environment Variables**
 
 <table><tr><td><strong>Variable</strong></td><td><strong>Value</strong></td></tr>
-<tr><td>WORKSPACE_ID</td><td>Azure Log Analytics Workspace ID</td></tr>
-<tr><td>WORKSPACE_KEY</td><td>Azure Log Analytics Workspace Key</td></tr>
+<tr><td>AZURE_LAW_ID</td><td>Secret Name for Azure Log Analytics Workspace ID from GCP Secrets Manager</td></tr>
+<tr><td>AZURE_LAW_KEY</td><td>Secret Name for Azure Log Analytics Workspace Key from GCP Secrets Manager</td></tr>
+<tr><td>LAW_TABLE_NAME</td><td>Azure Log Analytics Custom Log Table Name</td></tr>
 <tr><td>PROJECTID</td><td>Project ID for where the Retry Topic exists</td></tr>
 <tr><td>HOST</td><td>Host value that will assign for the PubSub event. Defaults to GCPFunction</td></tr>
 <tr><td>SOURCE_TYPE</td><td>Sourcetype that will be given to the event (defaults to google:gcp:pubsub:message)</td></tr>
 <tr><td>SOURCE_NAME</td><td>If set, this will be assigned to the “Source” of the event. If not set, defaults to PubSub topic</td></tr>
-<tr><td>INDEX</td><td>If this is set to LOGNAME then another environment variable with the name of the log needs to be set with an index name e.g. if you want all logs from “cloudaudit.googleapis.com%2Factivity” to be sent to index ActivityIX, you need to create an environment variable with the name “activity” with the value of ActivityIX. 
+<tr><td>INDEX</td><td>**If this is set to LOGNAME then another environment variable with the name of the log needs to be set with an index name** \n e.g. if you want all logs from “cloudaudit.googleapis.com%2Factivity” to be sent to index ActivityIX, you need to create an environment variable with the name “activity” with the value of ActivityIX. 
 Note to use the value after “%2F”, or if the log doesn’t have that, use the value after /logs/ (eg. A logname of projects/projname/logs/OSConfigAgent would have variable set to OSConfigAgent)
 
 </td></tr>
@@ -178,11 +179,12 @@ Examples:
 cloudaudit.googleapis.com%2Factivity -> use activity 
 /logs/OSConfigAgent -> use OSConfigAgent
 (defaults to no value)
-In Log name, select the audit log type that you want to see:
 
-For Admin Activity audit logs, select activity.
-For Data Access audit logs, select data_access.
-For System Event audit logs, select system_event.
+Audit log type that you may want to see:
+
+For Admin Activity audit logs, select activity. \n
+For Data Access audit logs, select data_access. \n
+For System Event audit logs, select system_event. \n
 For Policy Denied audit logs, select policy.</td></tr>
 <tr><td>COMPATIBLE</td><td>Set this to TRUE to maintain compatibility with Add-On. If not TRUE, event payload will be exact copy of PubSub event. Default is TRUE</td></tr>
 <tr><td>RETRY_TOPIC</td><td>Name of Topic to send event to on any failure scenario for the function</td></tr>
