@@ -91,9 +91,7 @@ RETRY_SUBSCRIPTION=GCPLogsRetryTopic-sub
 RETRY_TRIGGER_PUBSUB=GCPToAzSentinelRetryTrigger
 RETRY_SCHEDULE=GCPToAzSentinelRetrySchedule
 
-
-
-#this section is specific for this example only
+#create PubSub Topic
 
 gcloud pubsub topics create $PUBSUB_TOPIC
 
@@ -186,8 +184,13 @@ gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --t
 <tr><td>HOST</td><td>Host value that will assign for the PubSub event. Defaults to GCPFunction</td></tr>
 <tr><td>SOURCE_TYPE</td><td>Sourcetype that will be given to the event (defaults to google:gcp:pubsub:message)</td></tr>
 <tr><td>SOURCE_NAME</td><td>If set, this will be assigned to the “Source” of the event. If not set, defaults to PubSub topic</td></tr>
-<tr><td>INDEX</td><td>**If this is set to LOGNAME then another environment variable with the name of the log needs to be set with an index name** \n e.g. if you want all logs from “cloudaudit.googleapis.com%2Factivity” to be sent to index ActivityIX, you need to create an environment variable with the name “activity” with the value of ActivityIX. 
-Note to use the value after “%2F”, or if the log doesn’t have that, use the value after /logs/ (eg. A logname of projects/projname/logs/OSConfigAgent would have variable set to OSConfigAgent)
+<tr><td>INDEX</td><td>**If this is set to LOGNAME then another environment variable with the name of the log needs to be set with an index name**  
+	
+	e.g. if you want all logs from “cloudaudit.googleapis.com%2Factivity” to be sent to index ActivityIX, you need to create an environment variable with the name
+	“activity” with the value of ActivityIX.  
+	
+	Note to use the value after “%2F”, or if the log doesn’t have that, use the value after /logs/ (eg. A logname of projects/projname/logs/OSConfigAgent would
+	have variable set to OSConfigAgent)
 
 </td></tr>
 <tr><td>logname</td><td>A variable with a log name for the event. Note that INDEX needs to be set to LOGNAME for this to be used. Use logname after /logs/ or if name has “%2F” in the name, use the logname after “%2F” 
