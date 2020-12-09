@@ -93,21 +93,36 @@ def synchronous_pull(project_id, subscription_name):
     print('in:'+str(incount)+' success:'+str(outcount))
     return outcount    
 
+def get_secret_value(secret_name):
+    print("Retrieving Secret values from Secrets Manager")
+    # Setup the Secret manager Client
+    client = secretmanager.SecretManagerServiceClient()
+    # Get the sites environment credentials
+    project_id = os.environ["PROJECTID"]
+
+    # Get the secret value  
+    resource_name = f"projects/{project_id}/secrets/{secret_name}/versions/latest"
+    try:
+        response = client.access_secret_version(resource_name)
+    except:
+        print(f"Unknown Error in retreiving secret value: {secret_name}")
+    secret_value = response.payload.data.decode('UTF-8')
+    return secret_value
+
 def prepare_post(logdata):
     print("Preparing LogData to send to Log Analytics Workspace")
     try:
-        workspace_id = os.environ['WORKSPACE_ID']
-    except:
-        workspace_id = ""
+        workspace_id = get_secret_value(os.environ['WORKSPACE_ID'])
+    except:        
         print("Unknown Error in retreiving environment variable WORKSPACE_ID")
 
     try:
-        workspace_key = os.environ['WORKSPACE_KEY']
+        workspace_key = get_secret_value(os.environ['WORKSPACE_KEY'])
     except:
         print("Unknown Error in retreiving environment variable WORKSPACE_KEY")
 
     try:
-        custom_log_table = os.environ['TABLE_NAME']
+        custom_log_table = os.environ['LAW_TABLE_NAME']
     except:
         print("Unknown Error in retreiving environment variable TABLE_NAME")
 

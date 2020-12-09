@@ -16,13 +16,16 @@ This function requires Cloud Scheduler API to be enabled on the Project. (https:
 Set up Stackdriver logs; create an export(s) and subscription to a PubSub Topic (see important note below)
 Set up a PubSub Topic for error messages (Note the name of the topic -  this will be used in the Environment variables later)
 
+**This function requires Secrets Manager to store Azure Log Analytics WORKSPACE ID and WORKSPACE KEY and provide Secret Name in the Environment Variables section.**
+
 ## **Function Dependencies:**
 PubSub Function requires the Retry Function. Install and set up the Retry Function first
 
 
 ## Install with gcloud CLI
 
-This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the PubSub Function with a Retry Function. A Cloud Schedule is also created to trigger the Retry Function (via PubSub Topic). Note that the Schedule and Retry Trigger and Retry Topic is common between all of examples and doesn't need to be repeated if you build more than one example.
+This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the PubSub Function with a Retry Function. A Cloud Schedule is also created to trigger the Retry Function (via PubSub Topic).
+
 
 #### Log export Sinks Created:
 
@@ -37,15 +40,15 @@ This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the
 
 **GCPLogsTopic** : This topic will collect logs from the export sinks
 
-**GCPLogsRetryTopic** : This topic can be common between all functions. This topic will collect failed writes from Ingest-GCP-Logs-To-Azure-Sentinel to 
+**GCPLogsRetryTopic** : This topic will collect failed writes from Ingest-GCP-Logs-To-Azure-Sentinel to 
 
-**GCPToAzSentinelRetryTrigger** : This topic can be common between all functions and triggers retries based on Cloud Schedule
+**GCPToAzSentinelRetryTrigger** : This topic triggers retries based on Cloud Schedule
 
 #### GCP Functions Created:
 
 **Ingest-GCP-Logs-To-Azure-Sentinel** : PubSub Function pulling from GCPLogsTopic 
 
-**Retry-Ingest-GCP-Logs-To-Azure-Sentinel** : Retry Function to pull any failed messages from Ingest-GCP-Logs-To-Azure-Sentinel (can be re-used across all examples)
+**Retry-Ingest-GCP-Logs-To-Azure-Sentinel** : Retry Function to pull any failed messages from Ingest-GCP-Logs-To-Azure-Sentinel
 
 
 ## Run in bash or the GCP Cloud Shell
@@ -163,8 +166,8 @@ gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --t
 ## **Function Environment Variables**
 
 <table><tr><td><strong>Variable</strong></td><td><strong>Value</strong></td></tr>
-<tr><td>AZURE_LAW_ID</td><td>Secret Name for Azure Log Analytics Workspace ID from GCP Secrets Manager</td></tr>
-<tr><td>AZURE_LAW_KEY</td><td>Secret Name for Azure Log Analytics Workspace Key from GCP Secrets Manager</td></tr>
+<tr><td>WORKSPACE_ID</td><td>Secret Name for Azure Log Analytics Workspace ID from GCP Secrets Manager</td></tr>
+<tr><td>WORKSPACE_KEY</td><td>Secret Name for Azure Log Analytics Workspace Key from GCP Secrets Manager</td></tr>
 <tr><td>LAW_TABLE_NAME</td><td>Azure Log Analytics Custom Log Table Name</td></tr>
 <tr><td>PROJECTID</td><td>Project ID for where the Retry Topic exists</td></tr>
 <tr><td>HOST</td><td>Host value that will assign for the PubSub event. Defaults to GCPFunction</td></tr>
