@@ -43,7 +43,7 @@ This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the
 
 #### GCP Functions Created:
 
-**Ingest-GCP-Logs-To-Azure-Sentinel** : PubSub Function pulling from ExamplePubSubLogsTopic 
+**Ingest-GCP-Logs-To-Azure-Sentinel** : PubSub Function pulling from GCPLogsTopic 
 
 **Retry-Ingest-GCP-Logs-To-Azure-Sentinel** : Retry Function to pull any failed messages from Ingest-GCP-Logs-To-Azure-Sentinel (can be re-used across all examples)
 
@@ -182,9 +182,9 @@ cloudaudit.googleapis.com%2Factivity -> use activity
 
 Audit log type that you may want to see:
 
-For Admin Activity audit logs, select activity. \n
-For Data Access audit logs, select data_access. \n
-For System Event audit logs, select system_event. \n
+For Admin Activity audit logs, select activity.  
+For Data Access audit logs, select data_access.  
+For System Event audit logs, select system_event.  
 For Policy Denied audit logs, select policy.</td></tr>
 <tr><td>COMPATIBLE</td><td>Set this to TRUE to maintain compatibility with Add-On. If not TRUE, event payload will be exact copy of PubSub event. Default is TRUE</td></tr>
 <tr><td>RETRY_TOPIC</td><td>Name of Topic to send event to on any failure scenario for the function</td></tr>
