@@ -20,6 +20,15 @@ Set up a PubSub Topic for error messages (Note the name of the topic -  this wil
 
 **This function requires Secrets Manager to store Azure Log Analytics WORKSPACE ID and WORKSPACE KEY and provide Secret Name in the Environment Variables section.**
 
+For example
+![SecretsManager](.\images\SecretsManager.png)
+
+Grant Permissions to App service account inorder to retrieve secret values programmatically in cloud function
+
+1. Go to IAM
+2. Select you app service account and click on "Add" on top - refer the following diagram
+	![SecretsManagerPermissions](.\images\SecretsManagerPermissions.png)
+
 ## **Function Dependencies:**
 PubSub Function requires the Retry Function. Install and set up the Retry Function first
 
@@ -32,8 +41,8 @@ This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the
 #### Log export Sinks Created:
 
 <table><tr><td><strong>Sink</strong></td><td><strong>Description</strong></td><td><strong>Filter</strong></td></tr>
-<tr><td>SinkForFunctions</td><td>Selects all GCP Function logs. Important note that it filters out the PubSub Function!!</td><td>resource.labels.function_name!="Ingest-GCP-Logs-To-Azure-Sentinel"</td></tr>
-<tr><td>SinkNoFunctions</td><td>Selects all Kubernetes/containers logs</td><td>protoPayload.serviceName="container.googleapis.com"</td></tr></table>
+<tr><td>LogsExporterSinkForFunctions</td><td>Selects all GCP Function logs. Important note that it filters out the PubSub Function!!</td><td>resource.labels.function_name!="Ingest-GCP-Logs-To-Azure-Sentinel"</td></tr>
+<tr><td>LogsExporterSinkForFunctions</td><td>Selects all Kubernetes/containers logs</td><td>protoPayload.serviceName="container.googleapis.com"</td></tr></table>
 
 **Caution: With aggregated export sinks, you can export a very large number of log entries. Design your logs query carefully.**
 
@@ -133,14 +142,15 @@ gcloud pubsub topics create $RETRY_TOPIC
 
 gcloud pubsub subscriptions create --topic $RETRY_TOPIC $RETRY_SUBSCRIPTION --ack-deadline=240
 
-cd azure-sentinel-gcp-data-connector/Retry-Ingest-GCP-Logs-To-Azure-Sentinel
-
 #create Retry function
+
+cd azure-sentinel-gcp-data-connector/Retry-Ingest-GCP-Logs-To-Azure-Sentinel
 
 gcloud functions deploy $RETRY_FUNCTON --runtime python37 \
  --trigger-topic=$RETRY_TRIGGER_PUBSUB --entry-point=hello_pubsub --allow-unauthenticated --timeout=240\
  --set-env-vars=WORKSPACE_ID=$WORKSPACE_ID,WORKSPACE_KEY=$WORKSPACE_KEY,LAW_TABLE_NAME=$LAW_TABLE_NAME,PROJECTID=$MY_PROJECT,SUBSCRIPTION=$RETRY_SUBSCRIPTION,RETRY_TRIGGER_TOPIC=$RETRY_TRIGGER_PUBSUB
 
+#create Retry Trigger
 gcloud pubsub topics create $RETRY_TRIGGER_PUBSUB
 
 gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --topic $RETRY_TRIGGER_PUBSUB --message-body "Retry" --project $MY_PROJECT
@@ -164,7 +174,7 @@ gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --t
 13.	Add the Environment variables and values described in the table below
 14.	In another browser window, check that the log export that is subscribed by the PubSub Topic has eliminated the name of the function. (see below)
 15.	Click Deploy
-16.	You will need to install the Retry function if you wish to have a recovery for any events that failed to write to Azure Log Analytics. See install guide for that function.
+16.	You will need to install the Retry function if you wish to have a recovery for any events that failed to write to Azure Log Analytics.
 
 ## **Function Environment Variables**
 
