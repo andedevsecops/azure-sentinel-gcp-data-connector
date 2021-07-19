@@ -18,17 +18,14 @@ This function requires Cloud Scheduler API to be enabled on the Project. (https:
 Set up Stackdriver logs; create an export(s) and subscription to a PubSub Topic (see important note below)
 Set up a PubSub Topic for error messages (Note the name of the topic -  this will be used in the Environment variables later)
 
-**This function requires Secrets Manager to store Azure Log Analytics WORKSPACE ID and WORKSPACE KEY and provide Secret Name in the Environment Variables section.**
+1. This function requires Secrets Manager to store Azure Log Analytics WORKSPACE ID and WORKSPACE KEY and provide Secret Name in the Environment Variables section  
 
 For example
 ![SecretsManager](./images/SecretsManager.png)
 
-Grant Permissions to App service account inorder to retrieve secret values programmatically in cloud function
-
-1. Go to IAM
-2. Select you app service account and click on "Add" on top - refer the following diagram
-	![SecretsManagerPermissions](./images/SecretsManagerPermissions.png)
-
+2. Enable Cloud Build API  
+   https://console.cloud.google.com/apis/library/cloudbuild.googleapis.com?project=project-id
+	
 ## **Function Dependencies:**
 PubSub Function requires the Retry Function. Install and set up the Retry Function first
 
@@ -62,7 +59,7 @@ This example will create 2 example Log Export Sinks, 3 PubSub Topics and use the
 **Retry-Ingest-GCP-Logs-To-Azure-Sentinel** : Retry Function to pull any failed messages from Ingest-GCP-Logs-To-Azure-Sentinel
 
 
-## Run in bash or the GCP Cloud Shell
+## Option #1 **Run in bash or the GCP Cloud Shell**
 
 **Note that you will need to change values in bold in the scripts below to identify your project id, HEC URL and HEC Token**
 You can also change the OS environment variables in the first section to fit your needs
@@ -155,8 +152,15 @@ gcloud scheduler jobs create pubsub $RETRY_SCHEDULE --schedule "*/5 * * * *" --t
 
 </pre>
 
+## **Post Deployment**  
+Cloud Functions uses the App Engine default service account, grant permissions to App service account inorder to retrieve secret values programmatically in cloud function
 
-## **Manual Setup**
+1. Go to IAM
+2. Click on “Add” --> Under New members add “<<Name>>@appspot.gserviceaccount.com” --> Select a role --> Secret Manager --> Secret Manager Secret Accessor --> Save  
+	![SecretsManagerPermissions](./images/SecretsManagerPermissions.png)
+
+
+## Option #2 **Manual Setup**
 1.	Create a new Cloud Function
 2.	Name your function – note the name – see important note below on the log export
 3.	Set the Trigger to be Cloud Pub Sub 
